@@ -1,0 +1,12 @@
+version: '2.4'
+
+services:
+
+  gearman-job-server-build:
+    build:
+        context: .
+        dockerfile: ./Dockerfile
+    image: gearman-job-server-build
+    hostname: gearman-job-server-build
+    volumes:
+      - .:/opt/
