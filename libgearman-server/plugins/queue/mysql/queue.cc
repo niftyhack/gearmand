@@ -134,6 +134,11 @@ gearmand_error_t MySQL::prepareAddStatement()
 {
   char query_buffer[1024];
 
+  if (this->add_stmt != NULL)
+  {
+    mysql_stmt_close(this->add_stmt);
+  }
+
   if ((this->add_stmt= mysql_stmt_init(this->con)) == NULL)
   {
     gearmand_log_error(GEARMAN_DEFAULT_LOG_PARAM, "mysql_stmt_init failed: %s", mysql_error(this->con));
@@ -157,6 +162,11 @@ gearmand_error_t MySQL::prepareAddStatement()
 gearmand_error_t MySQL::prepareDoneStatement()
 {
   char query_buffer[1024];
+
+  if (this->done_stmt != NULL)
+  {
+    mysql_stmt_close(this->done_stmt);
+  }
 
   if ((this->done_stmt= mysql_stmt_init(this->con)) == NULL)
   {
@@ -334,32 +344,21 @@ static gearmand_error_t _mysql_queue_add(gearman_server_st *, void *context,
   {
     if (mysql_stmt_bind_param(queue->add_stmt, bind))
     {
-      if ( mysql_stmt_errno(queue->add_stmt) == CR_NO_PREPARE_STMT )
+      gearmand_log_error(GEARMAN_DEFAULT_LOG_PARAM, "mysql_stmt_bind_param (%.*s %.*s) failed: [%d]%s", function_name_size, function_name, unique_size, unique, mysql_stmt_errno(queue->add_stmt), mysql_stmt_error(queue->add_stmt));
+      if (queue->prepareAddStatement() != GEARMAND_QUEUE_ERROR)
       {
-        if (queue->prepareAddStatement() == GEARMAND_QUEUE_ERROR)
-        {
-          return GEARMAND_QUEUE_ERROR;
-        }
         continue;
       }
-      else
-      {
-        gearmand_log_error(GEARMAN_DEFAULT_LOG_PARAM, "mysql_stmt_bind_param failed: %s", mysql_error(queue->con));
-        return GEARMAND_QUEUE_ERROR;
-      }
+      return GEARMAND_QUEUE_ERROR;
     }
 
     if (mysql_stmt_execute(queue->add_stmt))
     {
-      if ( mysql_stmt_errno(queue->add_stmt) == CR_SERVER_LOST )
+      gearmand_log_error(GEARMAN_DEFAULT_LOG_PARAM, "mysql_stmt_execute (%.*s %.*s) failed: [%d]%s", function_name_size, function_name, unique_size, unique, mysql_stmt_errno(queue->add_stmt), mysql_stmt_error(queue->add_stmt));
+      if (queue->prepareAddStatement() != GEARMAND_QUEUE_ERROR)
       {
-        mysql_stmt_close(queue->add_stmt);
-        if (queue->prepareAddStatement() != GEARMAND_QUEUE_ERROR)
-        {
-          continue;
-        }
+        continue;
       }
-      gearmand_log_error(GEARMAN_DEFAULT_LOG_PARAM, "mysql_stmt_execute failed: %s", mysql_error(queue->con));
       return GEARMAND_QUEUE_ERROR;
     }
 
@@ -407,33 +406,21 @@ static gearmand_error_t _mysql_queue_done(gearman_server_st*, void *context,
   {
     if (mysql_stmt_bind_param(queue->done_stmt, bind))
     {
-      if ( mysql_stmt_errno(queue->done_stmt) == CR_NO_PREPARE_STMT )
+      gearmand_log_error(GEARMAN_DEFAULT_LOG_PARAM, "mysql_stmt_bind_param (%.*s %.*s) failed: [%d]%s", function_name_size, function_name, unique_size, unique, mysql_stmt_errno(queue->done_stmt), mysql_stmt_error(queue->done_stmt));
+      if (queue->prepareDoneStatement() != GEARMAND_QUEUE_ERROR)
       {
-        if (queue->prepareDoneStatement() == GEARMAND_QUEUE_ERROR)
-        {
-          return GEARMAND_QUEUE_ERROR;
-        }
         continue;
       }
-      else
-      {
-        gearmand_log_error(GEARMAN_DEFAULT_LOG_PARAM, "mysql_stmt_bind_param failed: %s", mysql_error(queue->con));
-        return GEARMAND_QUEUE_ERROR;
-      }
+      return GEARMAND_QUEUE_ERROR;
     }
 
     if (mysql_stmt_execute(queue->done_stmt))
     {
-      if ( mysql_stmt_errno(queue->done_stmt) == CR_SERVER_LOST )
+      gearmand_log_error(GEARMAN_DEFAULT_LOG_PARAM, "mysql_stmt_execute (%.*s %.*s) failed: [%d]%s", function_name_size, function_name, unique_size, unique, mysql_stmt_errno(queue->done_stmt), mysql_stmt_error(queue->done_stmt));
+      if (queue->prepareDoneStatement() != GEARMAND_QUEUE_ERROR)
       {
-        mysql_stmt_close(queue->done_stmt);
-        if (queue->prepareDoneStatement() != GEARMAND_QUEUE_ERROR)
-        {
-          continue;
-        }
+        continue;
       }
-      gearmand_log_error(GEARMAN_DEFAULT_LOG_PARAM, "mysql_stmt_execute failed: %s", mysql_error(queue->con));
-
       return GEARMAND_QUEUE_ERROR;
     }
 
