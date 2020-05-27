@@ -261,12 +261,14 @@ gearmand_error_t _initialize(gearman_server_st& server, gearmand::plugins::queue
                                       "("
                                       "unique_key VARCHAR(%d),"
                                       "function_name VARCHAR(255),"
-                                      "priority INT,"
+                                      "priority INT (11),"
                                       "data LONGBLOB,"
-                                      "when_to_run INT,"
+                                      "when_to_run INT (11),"
+                                      "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                                      "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,"
                                       "unique key (unique_key, function_name)"
                                       ")",
-                                      queue->mysql_table.c_str(), GEARMAN_UNIQUE_SIZE);
+                                      queue->mysql_table.c_str(), 255);
 
     gearmand_log_info(GEARMAN_DEFAULT_LOG_PARAM,"MySQL module: creating table %s", queue->mysql_table.c_str());
 
