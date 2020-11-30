@@ -266,7 +266,7 @@ gearmand_error_t _initialize(gearman_server_st& server, gearmand::plugins::queue
                                       "when_to_run INT (11),"
                                       "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                                       "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,"
-                                      "unique key (unique_key, function_name)"
+                                      "primary key (unique_key, function_name)"
                                       ")",
                                       queue->mysql_table.c_str(), 255);
 
